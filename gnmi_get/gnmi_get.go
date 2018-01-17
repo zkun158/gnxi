@@ -48,6 +48,7 @@ func (i *arrayFlags) Set(value string) error {
 var (
 	xPathFlags   arrayFlags
 	pbPathFlags  arrayFlags
+	pathTarget   = flag.String("xpath_target", "CONFIG_DB", "name of the target for which the path is a member")
 	targetAddr   = flag.String("target_addr", "localhost:10161", "The target address in the format of host:port")
 	targetName   = flag.String("target_name", "hostname.com", "The target name use to verify the hostname returned by TLS handshake")
 	timeOut      = flag.Duration("time_out", 10*time.Second, "Timeout for the Get request, 10 seconds by default")
@@ -80,11 +81,13 @@ func main() {
 		log.Exitf("Supported encodings: %s", strings.Join(gnmiEncodingList, ", "))
 	}
 
+	var prefix pb.Path
+	prefix.Target = *pathTarget
 	var pbPathList []*pb.Path
 	for _, xPath := range xPathFlags {
 		pbPath, err := xpath.ToGNMIPath(xPath)
 		if err != nil {
-			log.Exitf("error in parsing xpath %q to gnmi path", xPath)
+			log.Exitf("error in parsing xpath %q to gnmi path, %v", xPath, err)
 		}
 		pbPathList = append(pbPathList, pbPath)
 	}
@@ -97,6 +100,7 @@ func main() {
 	}
 
 	getRequest := &pb.GetRequest{
+		Prefix:   &prefix,
 		Encoding: pb.Encoding(encoding),
 		Path:     pbPathList,
 	}
