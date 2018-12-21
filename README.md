@@ -20,11 +20,13 @@ _Note_: These tools are intended for testing and as reference implementation of 
 *  [gNMI Set](./gnmi_set)
 *  [gNMI Get](./gnmi_get)
 *  [gNMI Target](./gnmi_target)
+*  [gNOI Cert](./gnoi_cert)
+*  [gNOI Target](./gnoi_target)
 
 ### Documentation
 
 *  See [gNMI Protocol documentation](https://github.com/openconfig/reference/tree/master/rpc/gnmi).
-*  See [gNOI Protocol documentation](https://github.com/openconfig/reference/tree/master/rpc/gnoi).
+*  See [gNOI Protocol documentation](https://github.com/openconfig/gnoi).
 *  See [Openconfig documentation](http://www.openconfig.net/).
 
 ## Getting Started
@@ -55,7 +57,7 @@ go run ./gnmi_get.go
 
 ## Docker
 
-[FAUCET](https://github.com/faucetsdn/faucet) currently includes a [Dockerfile](https://github.com/faucetsdn/faucet/blob/master/gnmi/Dockerfile) to setup the environment that facilitates testing these tools against network equipment. See the [gNMI FAUCET documentation](https://github.com/faucetsdn/faucet/tree/master/gnmi) for more information.
+[FAUCET](https://github.com/faucetsdn/gnmi) currently includes a [Dockerfile](https://github.com/faucetsdn/gnmi/blob/master/Dockerfile) to setup the environment that facilitates testing these tools against network equipment.
 
 ## Disclaimer
 

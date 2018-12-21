@@ -45,19 +45,35 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
+func parseModelData(s *string) (*pb.ModelData, error) {
+	pbModelData := new(pb.ModelData)
+	modelDataVars := strings.Split(*s, ",")
+	if len(modelDataVars) != 3 {
+		return pbModelData, fmt.Errorf("Unable to parse string")
+	}
+	pbModelData = &pb.ModelData{
+		Name:         modelDataVars[0],
+		Organization: modelDataVars[1],
+		Version:      modelDataVars[2],
+	}
+	return pbModelData, nil
+}
+
 var (
-	xPathFlags   arrayFlags
-	pbPathFlags  arrayFlags
-	pathTarget   = flag.String("xpath_target", "CONFIG_DB", "name of the target for which the path is a member")
-	targetAddr   = flag.String("target_addr", "localhost:10161", "The target address in the format of host:port")
-	targetName   = flag.String("target_name", "hostname.com", "The target name use to verify the hostname returned by TLS handshake")
-	timeOut      = flag.Duration("time_out", 10*time.Second, "Timeout for the Get request, 10 seconds by default")
-	encodingName = flag.String("encoding", "JSON_IETF", "value encoding format to be used")
+	xPathFlags       arrayFlags
+	pbPathFlags      arrayFlags
+	pbModelDataFlags arrayFlags
+	pathTarget       = flag.String("xpath_target", "CONFIG_DB", "name of the target for which the path is a member")
+	targetAddr       = flag.String("target_addr", "localhost:10161", "The target address in the format of host:port")
+	targetName       = flag.String("target_name", "hostname.com", "The target name use to verify the hostname returned by TLS handshake")
+	timeOut          = flag.Duration("time_out", 10*time.Second, "Timeout for the Get request, 10 seconds by default")
+	encodingName     = flag.String("encoding", "JSON_IETF", "value encoding format to be used")
 )
 
 func main() {
 	flag.Var(&xPathFlags, "xpath", "xpath of the config node to be fetched")
 	flag.Var(&pbPathFlags, "pbpath", "protobuf format path of the config node to be fetched")
+	flag.Var(&pbModelDataFlags, "model_data", "Data models to be used by the target in the format of 'name,organization,version'")
 	flag.Parse()
 
 	opts := credentials.ClientCredentials(*targetName)
@@ -84,6 +100,7 @@ func main() {
 	var prefix pb.Path
 	prefix.Target = *pathTarget
 	var pbPathList []*pb.Path
+	var pbModelDataList []*pb.ModelData
 	for _, xPath := range xPathFlags {
 		pbPath, err := xpath.ToGNMIPath(xPath)
 		if err != nil {
@@ -98,11 +115,18 @@ func main() {
 		}
 		pbPathList = append(pbPathList, &pbPath)
 	}
+	for _, textPbModelData := range pbModelDataFlags {
+		pbModelData, err := parseModelData(&textPbModelData)
+		if err == nil {
+			pbModelDataList = append(pbModelDataList, pbModelData)
+		}
+	}
 
 	getRequest := &pb.GetRequest{
-		Prefix:   &prefix,
-		Encoding: pb.Encoding(encoding),
-		Path:     pbPathList,
+		Prefix:    &prefix,
+		Encoding:  pb.Encoding(encoding),
+		Path:      pbPathList,
+		UseModels: pbModelDataList,
 	}
 
 	fmt.Println("== getRequest:")

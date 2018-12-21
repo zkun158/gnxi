@@ -62,8 +62,8 @@ func TestCapabilities(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	jsonConfigRoot := `{
-		"system": {
-			"openflow": {
+		"openconfig-system:system": {
+			"openconfig-openflow:openflow": {
 				"agent": {
 					"config": {
 						"failure-mode": "SECURE",
@@ -72,7 +72,7 @@ func TestGet(t *testing.T) {
 				}
 			}
 		},
-	  "components": {
+	  "openconfig-platform:components": {
 	    "component": [
 	      {
 	        "config": {
@@ -92,6 +92,7 @@ func TestGet(t *testing.T) {
 	tds := []struct {
 		desc        string
 		textPbPath  string
+		modelData   []*pb.ModelData
 		wantRetCode codes.Code
 		wantRespVal interface{}
 	}{{
@@ -132,7 +133,7 @@ func TestGet(t *testing.T) {
 		textPbPath:  `elem: <name: "components" >`,
 		wantRetCode: codes.OK,
 		wantRespVal: `{
-							"component": [{
+							"openconfig-platform:component": [{
 								"config": {
 						        	"name": "swpri1-1-1"
 								},
@@ -148,8 +149,8 @@ func TestGet(t *testing.T) {
 								>`,
 		wantRetCode: codes.OK,
 		wantRespVal: `{
-								"config": {"name": "swpri1-1-1"},
-								"name": "swpri1-1-1"
+								"openconfig-platform:config": {"name": "swpri1-1-1"},
+								"openconfig-platform:name": "swpri1-1-1"
 							}`,
 	}, {
 		desc: "node with attribute in its parent",
@@ -161,7 +162,7 @@ func TestGet(t *testing.T) {
 								>
 								elem: <name: "config" >`,
 		wantRetCode: codes.OK,
-		wantRespVal: `{"name": "swpri1-1-1"}`,
+		wantRespVal: `{"openconfig-platform:name": "swpri1-1-1"}`,
 	}, {
 		desc: "ref leaf node",
 		textPbPath: `
@@ -205,18 +206,22 @@ func TestGet(t *testing.T) {
 								>
 								elem: <name: "name" >`,
 		wantRetCode: codes.NotFound,
+	}, {
+		desc:        "use of model data not supported",
+		modelData:   []*pb.ModelData{&pb.ModelData{}},
+		wantRetCode: codes.Unimplemented,
 	}}
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
-			runTestGet(t, s, td.textPbPath, td.wantRetCode, td.wantRespVal)
+			runTestGet(t, s, td.textPbPath, td.wantRetCode, td.wantRespVal, td.modelData)
 		})
 	}
 }
 
 // runTestGet requests a path from the server by Get grpc call, and compares if
 // the return code and response value are expected.
-func runTestGet(t *testing.T, s *Server, textPbPath string, wantRetCode codes.Code, wantRespVal interface{}) {
+func runTestGet(t *testing.T, s *Server, textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, useModels []*pb.ModelData) {
 	// Send request
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
@@ -225,7 +230,7 @@ func runTestGet(t *testing.T, s *Server, textPbPath string, wantRetCode codes.Co
 	req := &pb.GetRequest{
 		Path:      []*pb.Path{&pbPath},
 		Encoding:  pb.Encoding_JSON_IETF,
-		UseModels: s.model.modelData,
+		UseModels: useModels,
 	}
 	resp, err := s.Get(nil, req)
 
@@ -1120,9 +1125,9 @@ func runTestSet(t *testing.T, m *Model, tc gnmiSetTestCase) {
 	case pb.UpdateResult_DELETE:
 		req = &pb.SetRequest{Delete: []*pb.Path{&pbPath}}
 	case pb.UpdateResult_REPLACE:
-		req = &pb.SetRequest{Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: tc.val}}}
+		req = &pb.SetRequest{Replace: []*pb.Update{{Path: &pbPath, Val: tc.val}}}
 	case pb.UpdateResult_UPDATE:
-		req = &pb.SetRequest{Update: []*pb.Update{&pb.Update{Path: &pbPath, Val: tc.val}}}
+		req = &pb.SetRequest{Update: []*pb.Update{{Path: &pbPath, Val: tc.val}}}
 	default:
 		t.Fatalf("invalid op type: %v", tc.op)
 	}
