@@ -5,8 +5,8 @@ A simple shell binary that performs a GET against a gNMI Target.
 ## Install
 
 ```
-go get github.com/jipanyang/gnxi/gnmi_get
-go install github.com/jipanyang/gnxi/gnmi_get
+go get github.com/zkun158/gnxi/gnmi_get
+go install github.com/zkun158/gnxi/gnmi_get
 ```
 
 ## Run
