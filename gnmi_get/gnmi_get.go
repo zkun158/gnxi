@@ -27,7 +27,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/google/gnxi/utils"
+	"github.com/jipanyang/gnxi/utils"
 	"github.com/jipanyang/gnxi/utils/credentials"
 	"github.com/jipanyang/gnxi/utils/xpath"
 
